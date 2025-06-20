@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import altair as alt
 import requests
+import os
 
 API_URL = "https://smart-chicken-coop.onrender.com"  # <-- cambia esto
 st.set_page_config(page_title="Egg Farm Dashboard", layout="wide")
@@ -9,8 +10,9 @@ st.set_page_config(page_title="Egg Farm Dashboard", layout="wide")
 st.title("📊 Smart_Chicken_Coop")
 
 # --- Token Login ---
-token = st.text_input("🔐 Bearer Token", type="password")
-headers = {"Authorization": f"Bearer {token}"} if token else {}
+API_TOKEN = os.environ.get("API_TOKEN", "")
+headers = {"Authorization": f"Bearer {API_TOKEN}",
+           "Content-Type":"application/json"} if API_TOKEN else {}
 
 # --- Coop selection ---
 coop_id = st.text_input("Coop ID", value="coop_1")
