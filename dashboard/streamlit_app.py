@@ -11,8 +11,10 @@ st.title("📊 Smart_Chicken_Coop")
 
 # --- Token Login ---
 API_TOKEN = os.environ.get("API_TOKEN", "")
-headers = {"Authorization": f"Bearer {API_TOKEN}",
-           "Content-Type":"application/json"} if API_TOKEN else {}
+headers = headers = {
+  'Content-Type': 'application/json',
+  'Authorization': f'Bearer {API_TOKEN}'
+}
 
 # --- Coop selection ---
 coop_id = st.text_input("Coop ID", value="coop_1")
