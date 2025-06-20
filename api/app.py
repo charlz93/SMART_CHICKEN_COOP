@@ -6,7 +6,7 @@ from datetime import datetime
 
 app = Flask(__name__)
 
-API_TOKEN = os.environ.get("API_TOKEN", "")
+API_TOKEN = st.secrets["API_TOKEN"]
 
 # DB init
 def init_db():
