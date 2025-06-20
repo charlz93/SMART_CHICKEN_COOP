@@ -34,6 +34,22 @@ def fetch_data(endpoint):
         st.error(f"Error de conexión: {e}")
         return pd.DataFrame()
 
+# --- Egg Production & Feed Logs ---
+st.subheader("🥚 Producción, 🍽️ Alimento servido, 💊 Desparasitación")
+log_df = fetch_data("daily-logs-range")
+if not log_df.empty:
+    log_df["date"] = pd.to_datetime(log_df["date"])
+    base = alt.Chart(log_df).encode(x='date:T')
+
+    egg_chart = base.mark_bar(color='orange').encode(y='eggs_collected:Q').properties(title="Huevos por día")
+    feed_given_chart = base.mark_line(color='green').encode(y='feed_given_g:Q').properties(title="Alimento servido (g)")
+    dewormer_chart = base.mark_point(size=100).encode(
+        y=alt.value(0), color=alt.condition("datum.dewormed == 1", alt.value("purple"), alt.value("transparent")),
+        tooltip=["date", "dewormed"]
+    ).properties(title="Días con desparasitación")
+
+    st.altair_chart(egg_chart & feed_given_chart & dewormer_chart, use_container_width=True)
+
 # --- Sensor Data ---
 st.subheader("🌡️ Temperatura y 💧 Humedad")
 sensor_df = fetch_data("sensor-data-range")
@@ -59,18 +75,3 @@ if not feed_df.empty:
     ).properties(title="Peso del alimento (g)")
     st.altair_chart(feed_chart, use_container_width=True)
 
-# --- Egg Production & Feed Logs ---
-st.subheader("🥚 Producción, 🍽️ Alimento servido, 💊 Desparasitación")
-log_df = fetch_data("daily-logs-range")
-if not log_df.empty:
-    log_df["date"] = pd.to_datetime(log_df["date"])
-    base = alt.Chart(log_df).encode(x='date:T')
-
-    egg_chart = base.mark_bar(color='orange').encode(y='eggs_collected:Q').properties(title="Huevos por día")
-    feed_given_chart = base.mark_line(color='green').encode(y='feed_given_g:Q').properties(title="Alimento servido (g)")
-    dewormer_chart = base.mark_point(size=100).encode(
-        y=alt.value(0), color=alt.condition("datum.dewormed == 1", alt.value("purple"), alt.value("transparent")),
-        tooltip=["date", "dewormed"]
-    ).properties(title="Días con desparasitación")
-
-    st.altair_chart(egg_chart & feed_given_chart & dewormer_chart, use_container_width=True)
