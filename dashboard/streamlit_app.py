@@ -3,10 +3,10 @@ import pandas as pd
 import altair as alt
 import requests
 
-API_URL = "https://tu-api-render.onrender.com"  # <-- cambia esto
+API_URL = "https://smart-chicken-coop.onrender.com"  # <-- cambia esto
 st.set_page_config(page_title="Egg Farm Dashboard", layout="wide")
 
-st.title("📊 Egg Farm Analytics")
+st.title("📊 Smart_Chicken_Coop")
 
 # --- Token Login ---
 token = st.text_input("🔐 Bearer Token", type="password")
