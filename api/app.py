@@ -129,6 +129,86 @@ def eggs_today(coop_id):
     conn.close()
     return jsonify({'eggs_collected': row[0] if row else 0})
 
+@app.route('/sensor-data-range')
+@require_token
+def sensor_data_range():
+    coop_id = request.args.get('coop_id')
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    conn = sqlite3.connect('eggfarm.db')
+    c = conn.cursor()
+    c.execute('''
+        SELECT coop_id, temperature, humidity, timestamp
+        FROM sensor_data
+        WHERE coop_id = ?
+          AND DATE(timestamp) BETWEEN DATE(?) AND DATE(?)
+        ORDER BY timestamp
+    ''', (coop_id, start, end))
+    rows = c.fetchall()
+    conn.close()
+
+    data = [
+        {"coop_id": row[0], "temperature": row[1], "humidity": row[2], "timestamp": row[3]}
+        for row in rows
+    ]
+    return jsonify(data)
+
+@app.route('/feed-data-range')
+@require_token
+def feed_data_range():
+    coop_id = request.args.get('coop_id')
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    conn = sqlite3.connect('eggfarm.db')
+    c = conn.cursor()
+    c.execute('''
+        SELECT coop_id, feed_weight, timestamp
+        FROM feed_data
+        WHERE coop_id = ?
+          AND DATE(timestamp) BETWEEN DATE(?) AND DATE(?)
+        ORDER BY timestamp
+    ''', (coop_id, start, end))
+    rows = c.fetchall()
+    conn.close()
+
+    data = [
+        {"coop_id": row[0], "feed_weight": row[1], "timestamp": row[2]}
+        for row in rows
+    ]
+    return jsonify(data)
+
+@app.route('/daily-logs-range')
+@require_token
+def daily_logs_range():
+    coop_id = request.args.get('coop_id')
+    start = request.args.get('start')
+    end = request.args.get('end')
+
+    conn = sqlite3.connect('eggfarm.db')
+    c = conn.cursor()
+    c.execute('''
+        SELECT coop_id, eggs_collected, feed_given_g, dewormed, date
+        FROM daily_logs
+        WHERE coop_id = ?
+          AND DATE(date) BETWEEN DATE(?) AND DATE(?)
+        ORDER BY date
+    ''', (coop_id, start, end))
+    rows = c.fetchall()
+    conn.close()
+
+    data = [
+        {
+            "coop_id": row[0],
+            "eggs_collected": row[1],
+            "feed_given_g": row[2],
+            "dewormed": row[3],
+            "date": row[4]
+        } for row in rows
+    ]
+    return jsonify(data)
+
 if __name__ == '__main__':
     init_db()
     app.run(host='0.0.0.0', port=5000)
