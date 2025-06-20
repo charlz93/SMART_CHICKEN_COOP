@@ -1,8 +1,12 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
+from functools import wraps
+import os
 import sqlite3
 from datetime import datetime
 
 app = Flask(__name__)
+
+API_TOKEN = os.environ.get("API_TOKEN", "")
 
 # DB init
 def init_db():
@@ -46,7 +50,22 @@ def init_db():
 def index():
     return "Egg Farm API is running ✅"
 
+def require_token(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.headers.get('Authorization', None)
+        if not auth or not auth.startswith("Bearer "):
+            abort(401, description="Missing or invalid Authorization header")
+
+        token = auth.split(" ")[1]
+        if token != API_TOKEN:
+            abort(403, description="Invalid token")
+
+        return f(*args, **kwargs)
+    return decorated
+
 @app.route('/sensor-data', methods=['POST'])
+@require_token
 def sensor_data():
     data = request.get_json()
     required = ['coop_id', 'temperature', 'humidity']
@@ -64,6 +83,7 @@ def sensor_data():
     return jsonify({'status': 'ok'}), 200
 
 @app.route('/feed-weight', methods=['POST'])
+@require_token
 def feed_weight():
     data = request.get_json()
     if not all(k in data for k in ('coop_id', 'feed_weight')):
@@ -80,6 +100,7 @@ def feed_weight():
     return jsonify({'status': 'ok'}), 200
 
 @app.route('/daily-log', methods=['POST'])
+@require_token
 def daily_log():
     data = request.get_json()
     required = ['coop_id', 'eggs_collected', 'feed_given_g', 'dewormed']
@@ -96,6 +117,17 @@ def daily_log():
     conn.commit()
     conn.close()
     return jsonify({'status': 'Log saved'}), 200
+
+@app.route('/eggs-today/<coop_id>')
+@require_token
+def eggs_today(coop_id):
+    conn = sqlite3.connect('eggfarm.db')
+    c = conn.cursor()
+    today = datetime.utcnow().date().isoformat()
+    c.execute('SELECT eggs_collected FROM daily_logs WHERE coop_id=? AND date=?', (coop_id, today))
+    row = c.fetchone()
+    conn.close()
+    return jsonify({'eggs_collected': row[0] if row else 0})
 
 if __name__ == '__main__':
     init_db()
